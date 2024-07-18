@@ -396,16 +396,11 @@ void CXWM::focusWindow(SP<CXWaylandSurface> surf) {
     if (surf == focusedSurface)
         return;
 
+    auto oldSurf   = focusedSurface.lock();
     focusedSurface = surf;
 
-    // send state to all surfaces, sometimes we might lose some
-    // that could still stick with the focused atom
-    for (auto& s : mappedSurfaces) {
-        if (!s)
-            continue;
-
-        sendState(s.lock());
-    }
+    if (oldSurf)
+        sendState(oldSurf);
 
     if (!surf) {
         xcb_set_input_focus_checked(connection, XCB_INPUT_FOCUS_POINTER_ROOT, XCB_NONE, XCB_CURRENT_TIME);
@@ -875,17 +870,13 @@ void CXWM::createWMWindow() {
     xcb_set_selection_owner(connection, wmWindow, HYPRATOMS["_NET_WM_CM_S0"], XCB_CURRENT_TIME);
 }
 
-void CXWM::activateSurface(SP<CXWaylandSurface> surf, bool activate) {
-    if ((surf == focusedSurface && activate) || (surf && surf->overrideRedirect))
+void CXWM::activateSurface(SP<CXWaylandSurface> surf) {
+    if (surf == focusedSurface || (surf && surf->overrideRedirect))
         return;
 
-    if (!activate || !surf) {
-        setActiveWindow((uint32_t)XCB_WINDOW_NONE);
-        focusWindow(nullptr);
-    } else {
-        setActiveWindow(surf ? surf->xID : (uint32_t)XCB_WINDOW_NONE);
-        focusWindow(surf);
-    }
+    setActiveWindow(surf ? surf->xID : (uint32_t)XCB_WINDOW_NONE);
+
+    focusWindow(surf);
 
     xcb_flush(connection);
 }

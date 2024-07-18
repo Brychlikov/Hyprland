@@ -179,7 +179,7 @@ void CXWaylandSurface::configure(const CBox& box) {
 void CXWaylandSurface::activate(bool activate) {
     if (overrideRedirect && !activate)
         return;
-    g_pXWayland->pWM->activateSurface(self.lock(), activate);
+    g_pXWayland->pWM->activateSurface(self.lock());
 }
 
 void CXWaylandSurface::setFullscreen(bool fs) {
